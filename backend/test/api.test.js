@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {spawn} from 'node:child_process';
+test('health endpoint responds',async()=>{const p=spawn(process.execPath,['src/server.js'],{cwd:process.cwd(),env:{...process.env,PORT:'18761',DATABASE_PATH:'/tmp/x-repost-test-'+process.pid+'.db'}});try{let response;for(let i=0;i<30;i++){try{response=await fetch('http://127.0.0.1:18761/health');break}catch{await new Promise(r=>setTimeout(r,150))}}assert.equal(response?.status,200);assert.equal((await response.json()).ok,true);}finally{p.kill()}});
