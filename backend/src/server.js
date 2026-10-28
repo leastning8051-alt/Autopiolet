@@ -23,7 +23,23 @@ const log = (event,detail) => { db.prepare('INSERT INTO activity(event,detail) V
 const app=express();
 app.disable('x-powered-by');
 app.use(helmet());
-app.use(cors({origin:(origin,cb)=>cb(null,!origin || (env.FRONTEND_URL||'http://localhost:5173').split(',').map(x=>x.trim()).includes(origin)),credentials:true}));
+const allowedOrigins = (env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({limit:'16kb'}));
 app.use('/api',rateLimit({windowMs:60000,limit:90,standardHeaders:'draft-7',legacyHeaders:false}));
 const secret=env.SESSION_SECRET||crypto.randomBytes(32).toString('hex');
